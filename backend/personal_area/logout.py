@@ -1,23 +1,16 @@
 from flask import Blueprint, request, jsonify
 
-from app.models import check_auth
-from app.redis import Redis
+from Database.redis import Redis_db
+from app.auth_utils import auth_user
 
 logout_bp = Blueprint('logout', __name__)
 
 
-@logout_bp.route('/logout', methods=['GET'])
-def logout():
+@logout_bp.route('/back/logout', methods=['GET'])
+@auth_user(name_func='logout')
+def logout(user):
     """Logout Page"""
-    user = check_auth(request.headers, __name__)
-    try:
-        if user[0] != True:
-            return user
-    except KeyError:
-        return user
-    user = user[1]
-
-    r = Redis()
+    r = Redis_db()
 
     r.del_user(user.get_token())
     return jsonify({'message': 'Пользователь вышел'}), 401

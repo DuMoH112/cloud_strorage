@@ -1,29 +1,19 @@
 from flask import Blueprint, render_template, request
 
-from app.models import check_auth
-from app.postgres import Database
+from Database.postgres import Postgres_db
 
 html_bp = Blueprint('html', __name__)
 
 
-@html_bp.route('/front/auth', methods=['GET'])
+@html_bp.route('/', methods=['GET'])
+@html_bp.route('/auth', methods=['GET'])
 def auth_html():
     return render_template('auth.html')
 
+@html_bp.route('/admin_panel', methods=['GET'])
+def register_html():
+    return render_template('admin_panel.html')
 
-@html_bp.route('/front/menu', methods=['GET'])
+@html_bp.route('/user_panel', methods=['GET'])
 def menu_html():
-    return render_template('menu.html')
-
-
-@html_bp.route('/front/chat', methods=['GET'])
-def chat_html():
-    # user = check_auth(request.headers, __name__)
-    # try:
-    #     if user[0] != True:
-    #         return user
-    # except KeyError:
-    #     return user
-    # user = user[1]
-
-    return render_template('chat.html', username="user.get_username()")
+    return render_template('user_panel.html')

@@ -1,18 +1,16 @@
+from time import time
+from datetime import datetime
+
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from socketio_app import socketio, app, redis
+from app import create_flask_app
+from Database.redis import check_actual_users_redis
 
 scheduler = BackgroundScheduler()
 
-scheduler.add_job(func=redis.check_actual_users_redis, trigger="interval", minutes=30)
+scheduler.add_job(func=check_actual_users_redis, trigger="interval", minutes=60)
 
 scheduler.start()
 
-def run_server(host=None):
-    if host:
-        socketio.run(app, host=host)
-    else:
-        socketio.run(app)
-
 if __name__ == "__main__":
-    run_server('0.0.0.0')
+    create_flask_app().run(host='0.0.0.0')

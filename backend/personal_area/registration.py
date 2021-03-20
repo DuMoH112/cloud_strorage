@@ -8,39 +8,24 @@ from psycopg2 import sql
 import requests
 import difflib
 
-from app.postgres import Database
+from Database.postgres import Postgres_db
+from app.auth_utils import auth_user
 
 registration_bp = Blueprint('registration', __name__)
 
 
-@registration_bp.route('/get_roles', methods=['GET'])
-def get_roles():
-    user = check_auth(requests.headers, __name__)
-    try:
-        if user[0] != True:
-            return user
-    except KeyError:
-        return user
-    user = user[1]
-
-    return jsonify({
-        "0": "Admin",
-        "1": "Executor",
-        "2": "Client"
-    })
-
-
-@registration_bp.route('/registration', methods=['POST'])
-def registration():
+@registration_bp.route('/back/registration', methods=['POST'])
+@auth_user(name_func='registration')
+def registration(user):
     user_data = request.get_json(silent=True)
     if not user_data:
         return jsonify({"message": "JSON не найден"}), 204
 
     database = None
     try:
-        database = Database()
+        database = Postgres_db()
 
-        user_data['role'] = 2
+        user_data['role'] = 1
 
         valid = valid_user_data(database, user_data)
         if valid != True:
@@ -49,12 +34,12 @@ def registration():
         salt = uuid.uuid4().hex
         user_data['password'] = hash_password(user_data['password'], salt)
 
-        valid = add_to_database(database, user_data)        
-        if valid != True:
-            return jsonify(valid), 500
+        user_id = add_to_database(database, user_data)        
+        if type(user_id) != int:
+            return jsonify(user_id), 500
 
-        user_data["uuid"] = get_user_id(database, user_data['email'])[0][0]
-        valid = insert_salt_for_user(database, user_data["uuid"], salt)
+        user_data["id"] = user_id
+        valid = insert_salt_for_user(database, user_data["id"], salt)
         if valid != True:
             return jsonify(valid), 500
 
@@ -64,7 +49,7 @@ def registration():
         if database:
             database.close()
 
-    return jsonify("Пользователь успешно зарегестрирован")
+    return jsonify(True)
 
 
 def valid_user_data(database, user_data):
@@ -75,28 +60,22 @@ def valid_user_data(database, user_data):
     if valid != True:
         vozvrat.append({"field": "password", "message": valid})
 
-    valid = valid_email(database, user_data.get('email'), user_data.get('password'))
+    valid = valid_username(user_data.get('username'), user_data.get('password'))
     if valid != True:
-        vozvrat.append({"field": "email", "message": valid})
+        vozvrat.append({"field": "username", "message": valid})
 
     return True if len(vozvrat) == 0 else vozvrat
 
-
-def valid_email(database, email, password):
-    """Valid email"""
-    if email == None:
-        return "email не введён"
-    if re.search("""(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])""", email) == None:
-        return "email не удовлетворяет требованиям"
-    if email == password or similarity(email, password) > 0.4:
-        return "email повторяется с паролем"
-    if bool(get_user_id(database, email)):
-        return "Пользователь с таким email уже зарегестрирован"
+def valid_username(username, password):
+    """Checking username"""
+    if username == None:
+        return "Логин не введён"
+    if re.search(
+            "^[A-Za-z\d\s\.\,\:\;\!\?\(\)\"\'\-\–\_]{1,40}$", username) == None:
+        return "Логин не удовлетворяет требованиям"
+    if username == password or similarity(username, password) > 0.4:
+        return "Логин не удовлетворяет требованиям"
     return True
-
-
-def get_user_id(database, email):
-    return database.select_data(sql.SQL("SELECT id FROM users WHERE email={}").format(sql.Literal(email)))
 
 
 def valid_password(password, confirm_password):
@@ -141,28 +120,40 @@ def similarity(s1, s2):
 
 
 def add_to_database(database, user_data):
-    query = "SELECT create_user({id}, {email}, {password}, {username}, {role_id})"
+    query = "INSERT INTO users({fields}) VALUES({values}) RETURNING id;"
 
     values = {
-        "id": sql.Literal(str(uuid.uuid4())),
-        "email": sql.Literal(user_data['email']),
-        "password": sql.Literal(user_data['password']),
-        "username": sql.Literal(re.split(r'\@', user_data['email'])[0]),
-        "role_id": sql.Literal(user_data['role'])
+        "username": user_data['username'],
+        "password": user_data['password'],
+        "firstname": user_data.get("firstname"),
+        "lastname": user_data.get("lastname"),
+        "patronymic": user_data.get("patronymic"),
+        "number_phone": user_data.get("number_phone"),
+        "size_space_kbyte": user_data['size_space_kbyte'],
+        "role": user_data['role']
     }
 
-    return database.insert_data(sql.SQL(query).format(**values))
+    user_id = database.select_data(sql.SQL(query).format(
+        fields=sql.SQL(",").join(sql.Identifier(i) for i in values if values.get(i)),
+        values=sql.SQL(",").join(sql.Literal(values[i]) for i in values if values.get(i))
+        )
+    )
+    
+    if type(user_id) == list:
+        user_id = user_id[0][0]
+        
+    return user_id
 
 
 def hash_password(password, salt):
     return hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt.encode('utf-8'), 100000)
 
 
-def insert_salt_for_user(database, user_uuid, salt):
+def insert_salt_for_user(database, user_id, salt):
     query = "INSERT INTO users_salt(user_id, salt) VALUES({user_id}, {salt})"
 
     values = {
-        "user_id": sql.Literal(user_uuid),
+        "user_id": sql.Literal(user_id),
         "salt": sql.Literal(salt)
     }
 

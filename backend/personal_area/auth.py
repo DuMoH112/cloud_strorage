@@ -6,57 +6,54 @@ from json.decoder import JSONDecodeError
 from psycopg2 import sql
 from flask import Blueprint, request, jsonify
 
-from app.redis import Redis
 from app.models import User
-from app.postgres import Database
+from app.config import config
+from Database.redis import Redis_db
+from Database.postgres import Postgres_db
 from personal_area.registration import hash_password
+from personal_area.registration import valid_password, valid_username
 
 auth_bp = Blueprint('auth', __name__)
 
 
-@auth_bp.route('/auth', methods=['POST'])
+@auth_bp.route('/back/auth', methods=['POST'])
 def authorization():
-    user_data = request.get_json(silent=True)
-    if not user_data:
-        return jsonify({"message": "JSON не найден"}), 204
-    
-    login = user_data.get("login")
-    password = user_data.get("password")
-
-    database = None
+    if request.headers.get('Token') != str(config['FLASK_APP']['FLASK_APP_SECRET_KEY']):
+        return jsonify({'message': 'Не верный токен'}), 401, {'ContentType': 'application/json'}
     try:
-        database = Database()
-        
-        user_data = database.login(login)
-        if type(user_data) == str:
-            return jsonify({"messageError": user_data}), 500
-    
-        if user_data:
-            if check_password(user_data, password):
-                if user_data["status_active"] == True:
-                    user = User(
-                        id=user_data["id"],
-                        username=user_data["username"],
-                        role=user_data["title"]
-                    )
-                    r = Redis()
-                    r.insert_user(user.get_token(), user)
-
-                    database.insert_data("UPDATE users SET last_login=now() \
-                                        WHERE username='{username}'".format(
-                        username=user.get_username()
-                    ))
-                    return jsonify({"UserToken": user.get_token(), "role": user.get_role()})
-                return jsonify({'message': 'Пользователь заблокирован'}), 401
-        return jsonify({'message': 'Неправильный логин или пароль'}), 401
-
+        database = Postgres_db()
     except TypeError:
-        return jsonify({"messageError": "Нет подключения к БД"}), 500
-    finally:
-        if database:
-            database.close()
+        return jsonify({"message": "Нет подключения к БД"})
+    redis_db = Redis_db()
+    if redis_db.error:
+        return jsonify(redis_db.error), 500
+
+    username = request.get_json(silent=True).get("username")
+    password = request.get_json(silent=True).get("password")
+
+    if not (valid_username(username, password) or valid_password(password, password)):
+        return jsonify("Неправильный логин или пароль"), 401
+
+    user_data = database.login(username=username)
+    if type(user_data) == str:
+        return jsonify(user_data), 500
+
+    if user_data:
+        if user_data["status_active"] == True:
+            if check_password(user_data, password):
+                user = User(
+                    id=user_data["id"],
+                    username=username,
+                    role=user_data["role"]
+                )
+
+                redis_db.insert_user(user.get_token(), user)
+
+                return jsonify({"UserToken": user.get_token(), "role": user.get_role()})
+        else:
+            return jsonify({'message': 'Пользователь заблокирован'}), 401, {'ContentType': 'application/json'}
     
-    return jsonify(True)
+    return jsonify({'message': 'Неправильный логин или пароль'}), 401
 
 
 def check_password(user_data, user_pass):

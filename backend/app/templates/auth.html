@@ -21,27 +21,33 @@
     <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
     <script>
         localStorage.setItem('Token', "Super_secret_key")
-        localStorage.setItem('url', "http://192.168.0.101:5000")
+        localStorage.setItem('url', "http://rdbkzn.ru:5555")
         $("#submit").click(() => {
             const login = $("#login").val()
             const password = $("#password").val()
             $.ajax({
                 type: "POST",
-                url: localStorage.getItem('url') + '/auth',
+                url: localStorage.getItem('url') + '/back/auth',
                 headers: {
                     "Content-Type": "application/json",
                     "Token": localStorage.getItem('Token')
                 },
                 dataType: 'json',
                 data: JSON.stringify({
-                    login: login,
+                    username: login,
                     password: password
                 }),
                 success: (response) => {
                     if (response.UserToken) {
                         localStorage.setItem('UserToken', response.UserToken)
                         localStorage.setItem('role', response.role)
-                        window.location.href = `${localStorage.getItem('url')}/front/menu`
+                        if (response.role == 0) {
+                            window.location.href = `${localStorage.getItem('url')}/admin_panel`
+                        }
+                        else if (response.role ==1) {
+                            window.location.href = `${localStorage.getItem('url')}/menu`
+
+                        }
                     }
                 },
                 failure: (failMsg) => {

@@ -2,18 +2,18 @@ import secrets
 import time
 
 from flask import jsonify
+from flask_wtf import Form
+from flask_wtf.file import FileField, FileRequired
 
 from Database.redis import Redis_db as Redis
 from app.auth_utils import PERMISSION_AUTHORIZATION
 
 
 class User ():
-    def __init__(self, id, username, role, id_fsso=None):
+    def __init__(self, id, username, role):
         self.__id = id
-        self.__id_fsso = id_fsso
         self.__username = username
         self.__role = role
-        self.FSSO = None
 
         self.__generate_token()
         self.__time_auth = int(time.time()) + 1800
@@ -53,7 +53,7 @@ class User ():
         return True
 
 
-class MyForm(Form):
+class UploadForm(Form):
     file_ = FileField('image', validators=[
         FileRequired()
     ])

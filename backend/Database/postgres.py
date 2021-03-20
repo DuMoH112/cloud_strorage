@@ -143,15 +143,16 @@ class Postgres_db:
         return True
 
     @__init_dict_cursor
-    def login(self, data, cursor):
-        cursor.execute(sql.SQL("SELECT * FROM get_data_login({})").format(sql.Literal(data.get("username"))))
+    def login(self, username, cursor):
+        cursor.execute(sql.SQL("SELECT * FROM get_data_login({})").format(sql.Literal(username)))
         psw = cursor.fetchone()
         if psw != None:
             return {
                 "id": psw[0],
                 "password": psw[1],
                 "role": psw[2],
-                "status_active": psw[3]
+                "status_active": psw[3],
+                "salt": psw[4]
             }
 
         return False

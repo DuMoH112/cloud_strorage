@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bg.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/menu.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+</head>
+
+<body>
+    <button id="get_users" class="btn btn-info">Список пользователей</button>
+    <script>
+        $('#get_users').click(() => {
+            if ($('#get_users_list').css('display') == 'none') {
+                $.ajax({
+                    type: "GET",
+                    url: localStorage.getItem('url') + '/back/users_list',
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Token": localStorage.getItem('Token'),
+                        "UserToken": localStorage.getItem('UserToken')
+                    },
+                    dataType: 'json',
+                    success: (response) => {
+                        let htmlData = ""
+                        if (response) {
+                            response.forEach(item => {
+                                htmlData += `<div id_data=${item.id} class="row">
+                                        <div class="col-2 title">${item.username}</div>    
+                                        <div class="col-3 title">${item.fistname ? item.fistname : ""} ${item.lastname ? item.lastname : ""}</div>    
+                                        <div class="col-2 status">${item.size_space_kbyte}</div>    
+                                        <div class="col-1 status">${item.status_active}</div>
+                                        <a class="col-1" href="">remove</a>    
+                                        <a class="col-3" href="">open storage</a>    
+                                    </div>`
+                            })
+                        }
+                        $("#get_users_list").append(
+                            `<div class="table">
+                                ${htmlData}
+                            </div>`
+                        )
+                    },
+                    failure: (failMsg) => {
+                        console.log(failMsg)
+                    },
+                    error: (errMsg) => {
+                        console.log(errMsg)
+                        if (errMsg.status == 401) {
+                            localStorage.removeItem('UserToken')
+                            window.location.href = `${localStorage.getItem('url')}/auth`
+                        } else if (errMsg.status in [500]) {
+                            $("#get_users_list").append(`<span class="errorMsg">${errMsg.responseJSON.messageError}<span>`)
+                        }
+                    }
+                })
+                $('#get_users_list').css('display', 'block')
+            } else {
+                $('#get_users_list').css('display', 'none')
+                $('.successMsg').remove()
+                $('.errorMsg').remove()
+            }
+        })
+    </script>
+
+    <button id="create_user" class="btn btn-info">Создать пользователя</button>
+    <script>
+        $('#create_user').click(() => {
+            if ($('#create_user_form').css('display') == 'none') {
+                $('#create_user_form').css('display', 'block')
+            } else {
+                $('#create_user_form').css('display', 'none')
+            }
+        })
+    </script>
+
+    <button id="logout" class="btn btn-info">Выйти</button>
+    <script>
+        $('#logout').click(() => {
+            $.ajax({
+                type: "GET",
+                url: localStorage.getItem('url') + '/back/logout',
+                headers: {
+                    "Content-Type": "application/json",
+                    "Token": localStorage.getItem('Token'),
+                    "UserToken": localStorage.getItem('UserToken')
+                },
+                dataType: 'json',
+                success: (response) => {
+                    if (response.message) {
+                        localStorage.removeItem('UserToken')
+                        window.location.href = `${localStorage.getItem('url')}/auth`
+                    }
+                },
+                failure: (failMsg) => {
+                    console.log(failMsg)
+                },
+                error: (errMsg) => {
+                    console.log(errMsg)
+                    if (errMsg.status == 401) {
+                        localStorage.removeItem('UserToken')
+                        window.location.href = `${localStorage.getItem('url')}/auth`
+                    }
+                }
+            })
+        })
+    </script>
+
+    <div id="window">
+        <div id="get_users_list" class="table" width="300px" style="display: none;">
+        </div>
+        <div id="create_user_form" class="form" width="300px" style="display: none;">
+            <div class="form-group">
+                <input id="username" class="form-control" placeholder="Имя пользователя" /><br/>
+                <input id="password" class="form-control" placeholder="Пароль" type="password"/><br/>
+                <input id="confirm_password" class="form-control" placeholder="Подтверждение пароля" type="password"/><br/>
+                <input id="firstname" class="form-control" placeholder="Имя" /><br/>
+                <input id="lastname" class="form-control" placeholder="Фамилия" /><br/>
+                <input id="patronymic" class="form-control" placeholder="Отчество" /><br/>
+                <input id="number_phone" class="form-control" placeholder="Номер телефона" /><br/>
+                <input id="size_space_kbyte" name="size_space_kbyte" class="form-control" placeholder="Размер хранилища КБайт" type="range" min="1024" max="102400" step="1024" value="102400"/><br/>
+                <small id="size_space_kbyte_word" style="color:white;">Объём выделяемого пространства: <span id="size_space_kbyte_value">100</span> Mb</small><br/>
+                <button id="create_user" class="btn btn-success">Создать</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $('#size_space_kbyte').change(() => {
+            $('#size_space_kbyte_value').text(Math.floor(parseInt($('#size_space_kbyte').val()) / 1024))
+        });
+
+        $('#create_user').click(() => {
+            $.ajax({
+                type: "POST",
+                url: localStorage.getItem('url') + '/back/registration',
+                headers: {
+                    "Content-Type": "application/json",
+                    "Token": localStorage.getItem('Token'),
+                    "UserToken": localStorage.getItem('UserToken')
+                },
+                dataType: 'json',
+                data: JSON.stringify({
+                    username: $('#username').val(),
+                    password: $('#password').val(),
+                    confirm_password: $('#confirm_password').val(),
+                    firstname: $('#firstname').val(),
+                    lastname: $('#lastname').val(),
+                    patronymic: $('#patronymic').val(),
+                    number_phone: $('#number_phone').val(),
+                    size_space_kbyte: $('#size_space_kbyte').val()
+                }),
+                success: (response) => {
+                    if (response == true) {
+                        $("#personal_data_form").append(`<span class="successMsg">Пользователь успешно зарегестрирован<span>`)
+                    }
+                },
+                failure: (failMsg) => {
+                    console.log(failMsg)
+                },
+                error: (errMsg) => {
+                    console.log(errMsg)
+                    if (errMsg.status == 401) {
+                        localStorage.removeItem('UserToken')
+                        window.location.href = `${localStorage.getItem('url')}/auth`
+                    } else if (errMsg.status in [400]) {
+                        errMsg.forEach(item => {
+                            htmlData += `<div id_data=${item.id} class="row">
+                                    <div class="col-2 title">${item.username}</div>    
+                                    <div class="col-3 title">${item.fistname ? item.fistname : ""} ${item.lastname ? item.lastname : ""}</div>    
+                                    <div class="col-2 status">${item.size_space_kbyte}</div>    
+                                    <div class="col-1 status">${item.status_active}</div>
+                                    <a class="col-1" href="">remove</a>    
+                                    <a class="col-3" href="">open storage</a>    
+                                </div>`
+                        })
+                        $("#create_user_form").append(`<span class="errorMsg">${errMsg.responseJSON.messageError}<span>`)
+                    } else if (errMsg.status in [500]) {
+                        $("#create_user_form").append(`<span class="errorMsg">${errMsg.responseJSON.messageError}<span>`)
+                    }
+                }
+            })
+        });
+    </script>
+</body>
+
+</html>

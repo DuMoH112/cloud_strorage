@@ -9,7 +9,9 @@ from app.config import config
 PERMISSION_AUTHORIZATION = {
     # 0 - Admin
     # 1 - Client
-    "logout": [0, 1]
+    "logout": [0, 1],
+    "users_list": [0],
+    "registration": [0]
 }
 
 
