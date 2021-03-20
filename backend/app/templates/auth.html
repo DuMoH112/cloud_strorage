@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bg.css') }}">
+</head>
+
+<body>
+    <div class="login">
+        <div id="form">
+            <input type="text" id="login" name="login" placeholder="Username" required="required" />
+            <input type="password" id="password" name="password" placeholder="Password" required="required" />
+            <button type="submit" id="submit" class="btn btn-primary btn-block btn-large">Login</button>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script>
+        localStorage.setItem('Token', "Super_secret_key")
+        localStorage.setItem('url', "http://192.168.0.101:5000")
+        $("#submit").click(() => {
+            const login = $("#login").val()
+            const password = $("#password").val()
+            $.ajax({
+                type: "POST",
+                url: localStorage.getItem('url') + '/auth',
+                headers: {
+                    "Content-Type": "application/json",
+                    "Token": localStorage.getItem('Token')
+                },
+                dataType: 'json',
+                data: JSON.stringify({
+                    login: login,
+                    password: password
+                }),
+                success: (response) => {
+                    if (response.UserToken) {
+                        localStorage.setItem('UserToken', response.UserToken)
+                        localStorage.setItem('role', response.role)
+                        window.location.href = `${localStorage.getItem('url')}/front/menu`
+                    }
+                },
+                failure: (failMsg) => {
+                    console.log(failMsg)
+                },
+                error: (errMsg) => {
+                    console.log(errMsg)
+                    if (errMsg.status == 401) {
+                        $("#form").append(`<span class="errorMsg">${errMsg.responseJSON.message}<span>`)
+                    } else if (errMsg.status in [500]) {
+                        $("#form").append(`<span class="errorMsg">${errMsg.responseJSON.messageError}<span>`)
+                    }
+                }
+            })
+        })
+    </script>
+</body>
+
+</html>

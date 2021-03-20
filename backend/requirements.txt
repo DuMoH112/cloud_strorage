@@ -1,0 +1,22 @@
+# Flask
+Flask==1.1.2
+flask_wtf==0.14.3
+
+WTForms==2.2.1
+Flask-APScheduler==1.11.0
+Flask-Cors==3.0.9
+flask_sslify==0.1.5
+
+# gunicorn
+gunicorn==20.0.4
+
+# Remote api
+requests==2.25.0
+Authlib==0.14.3
+cryptography==3.2.1
+
+# PostgresSQL
+psycopg2==2.8.6
+
+# Redis
+redis==3.5.3

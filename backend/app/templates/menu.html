@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bg.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/menu.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+</head>
+
+<body>
+    <button id="create_order" class="btn btn-info">Создать заявку</button>
+    <script>
+        $('#create_order').click(() => {
+            if ($('#create_order_form').css('display') == 'none') {
+                $('#create_order_form').css('display', 'block')
+            } else {
+                $('#create_order_form').css('display', 'none')
+            }
+        })
+    </script>
+
+    <button id="personal_area" class="btn btn-info">Личный кабинет</button>
+    <script>
+        $('#personal_area').click(() => {
+            if ($('#personal_area_form').css('display') == 'none') {
+                $.ajax({
+                    type: "GET",
+                    url: localStorage.getItem('url') + '/get_personal_data',
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Token": localStorage.getItem('Token'),
+                        "UserToken": localStorage.getItem('UserToken')
+                    },
+                    dataType: 'json',
+                    success: (response) => {
+                        if (response) {
+                            Object.keys(response).forEach(key => {
+                                if (response[key]) {
+                                    $(`#${key}`).val(response[key])
+                                }
+                            })
+                        }
+                    },
+                    failure: (failMsg) => {
+                        console.log(failMsg)
+                    },
+                    error: (errMsg) => {
+                        console.log(errMsg)
+                        if (errMsg.status == 401) {
+                            localStorage.removeItem('UserToken')
+                            window.location.href = `${localStorage.getItem('url')}/front/auth`
+                        } else if (errMsg.status in [500]) {
+                            $("#personal_area_form").append(`<span class="errorMsg">${errMsg.responseJSON.messageError}<span>`)
+                        }
+                    }
+                })
+                $.ajax({
+                    type: "GET",
+                    url: localStorage.getItem('url') + '/get_biometric_information',
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Token": localStorage.getItem('Token'),
+                        "UserToken": localStorage.getItem('UserToken')
+                    },
+                    dataType: 'json',
+                    success: (response) => {
+                        if (response) {
+                            Object.keys(response).forEach(key => {
+                                if (response[key]) {
+                                    $(`#${key}`).val(response[key])
+                                }
+                            })
+                        }
+                    },
+                    failure: (failMsg) => {
+                        console.log(failMsg)
+                    },
+                    error: (errMsg) => {
+                        console.log(errMsg)
+                        if (errMsg.status == 401) {
+                            localStorage.removeItem('UserToken')
+                            window.location.href = `${localStorage.getItem('url')}/front/auth`
+                        } else if (errMsg.status in [500]) {
+                            $("#biometric_information_form").append(`<span class="errorMsg">${errMsg.responseJSON.messageError}<span>`)
+                        }
+                    }
+                })
+                $('#personal_area_form').css('display', 'block')
+            } else {
+                $('#personal_area_form').css('display', 'none')
+                $('.successMsg').remove()
+                $('.errorMsg').remove()
+            }
+        })
+    </script>
+
+    <button id="orders" class="btn btn-info">Обращения</button>
+    <script>
+        $('#orders').click(() => {
+            if ($('#orders_table').css('display') == 'none') {
+                $.ajax({
+                    type: "GET",
+                    url: localStorage.getItem('url') + '/get_history_of_orders',
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Token": localStorage.getItem('Token'),
+                        "UserToken": localStorage.getItem('UserToken')
+                    },
+                    dataType: 'json',
+                    success: (response) => {
+                        let htmlData = ""
+                        if (response) {
+                            response.forEach(item => {
+                                htmlData += `<div id_data=${item.id} class="row">
+                                        <div class="col-9 title">${item.title}</div>    
+                                        <div class="col-3 status">${item.status}</div>    
+                                    </div>`
+                            })
+                        }
+                        $("#orders_table").append(
+                            `<div class="table">
+                                ${htmlData}
+                            </div>`
+                        )
+                    },
+                    failure: (failMsg) => {
+                        console.log(failMsg)
+                    },
+                    error: (errMsg) => {
+                        console.log(errMsg)
+                        if (errMsg.status == 401) {
+                            localStorage.removeItem('UserToken')
+                            window.location.href = `${localStorage.getItem('url')}/front/auth`
+                        } else if (errMsg.status in [500]) {
+                            $("#orders_table").append(`<span class="errorMsg">${errMsg.responseJSON.messageError}<span>`)
+                        }
+                    }
+                })
+                $('#orders_table').css('display', 'block')
+            } else {
+                $('#orders_table').css('display', 'none')
+                $('#orders_table').empty()
+            }
+        })
+    </script>
+
+    <button id="logout" class="btn btn-info">Выйти</button>
+    <script>
+        $('#logout').click(() => {
+            $.ajax({
+                type: "GET",
+                url: localStorage.getItem('url') + '/logout',
+                headers: {
+                    "Content-Type": "application/json",
+                    "Token": localStorage.getItem('Token'),
+                    "UserToken": localStorage.getItem('UserToken')
+                },
+                dataType: 'json',
+                success: (response) => {
+                    if (response.message) {
+                        localStorage.removeItem('UserToken')
+                        window.location.href = `${localStorage.getItem('url')}/front/auth`
+                    }
+                },
+                failure: (failMsg) => {
+                    console.log(failMsg)
+                },
+                error: (errMsg) => {
+                    console.log(errMsg)
+                    if (errMsg.status == 401) {
+                        localStorage.removeItem('UserToken')
+                        window.location.href = `${localStorage.getItem('url')}/front/auth`
+                    }
+                }
+            })
+        })
+    </script>
+
+    <div id="window">
+        <div id="create_order_form" class="form" width="300px" style="display: none;">
+            <div class="form-group">
+                <input id="title_create_order" class="form-control" placeholder="Заголовок" /><br/>
+                <textarea id="message_create_order" class="form-control"></textarea><br/>
+                <button id="send_create_order" class="btn btn-success">Send</button>
+            </div>
+        </div>
+        <div id="personal_area_form" class="form" width="300px" style="display: none;">
+            <div id="personal_data_form" class="form-group">
+                <input id="email" class="form-control" placeholder="E-mail" /><br/>
+                <input id="firstname" class="form-control" placeholder="Имя" /><br/>
+                <input id="gender" class="form-control" placeholder="Пол" /><br/>
+                <input id="lastname" class="form-control" placeholder="Фамилия" /><br/>
+                <input id="number_phone" class="form-control" placeholder="Номер телефона" /><br/>
+                <input id="patronymic" class="form-control" placeholder="Отчество" /><br/>
+                <input id="username" class="form-control" placeholder="Логин" /><br/>
+                <button id="update_personal_data" class="btn btn-success">Update</button>
+            </div>
+            <div id="biometric_information_form" class="form-group">
+                <input id="age" class="form-control" placeholder="Возраст" /><br/>
+                <input id="body_mass" class="form-control" placeholder="Вес" /><br/>
+                <input id="growth" class="form-control" placeholder="Рост" /><br/>
+                <button id="update_biometric_information" class="btn btn-success">Update</button>
+            </div>
+        </div>
+        <div id="orders_table" class="table" width="300px" style="display: none;">
+        </div>
+    </div>
+
+    <script>
+        $('#send_create_order').click(() => {
+            const title = $('#title_create_order').val()
+            const message = $('#message_create_order').val()
+            $.ajax({
+                type: "POST",
+                url: localStorage.getItem('url') + '/orders/create_order',
+                headers: {
+                    "Content-Type": "application/json",
+                    "Token": localStorage.getItem('Token'),
+                    "UserToken": localStorage.getItem('UserToken')
+                },
+                dataType: 'json',
+                data: JSON.stringify({
+                    title: title,
+                    message: message,
+                    departure_time: Math.round(Date.now() / 1000)
+                }),
+                success: (response) => {
+                    if (response == true) {
+                        $("#create_order_form").append(`<span class="successMsg">Ваше обращение принято<span>`)
+                    }
+                },
+                failure: (failMsg) => {
+                    console.log(failMsg)
+                },
+                error: (errMsg) => {
+                    console.log(errMsg)
+                    if (errMsg.status == 401) {
+                        localStorage.removeItem('UserToken')
+                        window.location.href = `${localStorage.getItem('url')}/front/auth`
+                    } else if (errMsg.status in [500]) {
+                        $("#create_order_form").append(`<span class="errorMsg">${errMsg.responseJSON.messageError}<span>`)
+                    }
+                }
+            })
+        });
+        $('#update_personal_data').click(() => {
+            $.ajax({
+                type: "PUT",
+                url: localStorage.getItem('url') + '/update_personal_data',
+                headers: {
+                    "Content-Type": "application/json",
+                    "Token": localStorage.getItem('Token'),
+                    "UserToken": localStorage.getItem('UserToken')
+                },
+                dataType: 'json',
+                data: JSON.stringify({
+                    firstname: $('#firstname').val(),
+                    lastname: $('#lastname').val(),
+                    patronymic: $('#patronymic').val(),
+                    gender: $('#gender').val(),
+                    username: $('#username').val(),
+                    number_phone: $('#number_phone').val()
+                }),
+                success: (response) => {
+                    if (response == true) {
+                        $("#personal_data_form").append(`<span class="successMsg">Данные обновлены<span>`)
+                    }
+                },
+                failure: (failMsg) => {
+                    console.log(failMsg)
+                },
+                error: (errMsg) => {
+                    console.log(errMsg)
+                    if (errMsg.status == 401) {
+                        localStorage.removeItem('UserToken')
+                        window.location.href = `${localStorage.getItem('url')}/front/auth`
+                    } else if (errMsg.status in [500]) {
+                        $("#personal_data_form").append(`<span class="errorMsg">${errMsg.responseJSON.messageError}<span>`)
+                    }
+                }
+            })
+        });
+        $('#update_biometric_information').click(() => {
+            $.ajax({
+                type: "PUT",
+                url: localStorage.getItem('url') + '/update_biometric_information',
+                headers: {
+                    "Content-Type": "application/json",
+                    "Token": localStorage.getItem('Token'),
+                    "UserToken": localStorage.getItem('UserToken')
+                },
+                dataType: 'json',
+                data: JSON.stringify({
+                    age: $('#age').val(),
+                    body_mass: $('#body_mass').val(),
+                    growth: $('#growth').val()
+                }),
+                success: (response) => {
+                    if (response == true) {
+                        $("#biometric_information_form").append(`<span class="successMsg">Данные обновлены<span>`)
+                    }
+                },
+                failure: (failMsg) => {
+                    console.log(failMsg)
+                },
+                error: (errMsg) => {
+                    console.log(errMsg)
+                    if (errMsg.status == 401) {
+                        localStorage.removeItem('UserToken')
+                        window.location.href = `${localStorage.getItem('url')}/front/auth`
+                    } else if (errMsg.status in [500]) {
+                        $("#biometric_information_form").append(`<span class="errorMsg">${errMsg.responseJSON.messageError}<span>`)
+                    } else if (errMsg.status == 400) {
+                        errMsg.responseJSON.forEach(item => {
+                            $("#biometric_information_form").append(`<span class="errorMsg">${item.error}<span><br/>`)
+                        })
+                    }
+                }
+            })
+        });
+    </script>
+</body>
+
+</html>

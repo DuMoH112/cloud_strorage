@@ -1,0 +1,10 @@
+/.vscode
+/postgre
+/venv
+*.log
+/env
+/redis/data
+/redis/redis.conf
+__pycache__
+.DS_Store
+docker-compose.yml
