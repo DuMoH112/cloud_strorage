@@ -129,6 +129,7 @@ def add_to_database(database, user_data):
         "lastname": user_data.get("lastname"),
         "patronymic": user_data.get("patronymic"),
         "number_phone": user_data.get("number_phone"),
+        "free_space_kbyte": user_data['size_space_kbyte'],
         "size_space_kbyte": user_data['size_space_kbyte'],
         "role": user_data['role']
     }

@@ -18,6 +18,7 @@ CREATE TABLE users
     patronymic           varchar(50),
     number_phone         varchar(50),
     last_login           timestamp,
+    free_space_kbyte     int,
     size_space_kbyte     int,
     status_active        boolean  default true,
     timer_blocked        timestamp,

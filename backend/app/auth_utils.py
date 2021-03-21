@@ -11,7 +11,14 @@ PERMISSION_AUTHORIZATION = {
     # 1 - Client
     "logout": [0, 1],
     "users_list": [0],
-    "registration": [0]
+    "registration": [0],
+    "create_folder": [0, 1],
+    "get_files_in_directory": [0, 1],
+    "cloud_drive": [0, 1],
+    "del_object": [0, 1],
+    "get_file": [0, 1],
+    "share_object": [0, 1],
+    "get_share_object": [0, 1]
 }
 
 

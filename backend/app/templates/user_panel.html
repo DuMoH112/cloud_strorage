@@ -52,7 +52,7 @@
                         console.log(errMsg)
                         if (errMsg.status == 401) {
                             localStorage.removeItem('UserToken')
-                            window.location.href = `${localStorage.getItem('url')}/front/auth`
+                            window.location.href = `${localStorage.getItem('url')}/auth`
                         } else if (errMsg.status in [500]) {
                             $("#personal_area_form").append(`<span class="errorMsg">${errMsg.responseJSON.messageError}<span>`)
                         }
@@ -83,7 +83,7 @@
                         console.log(errMsg)
                         if (errMsg.status == 401) {
                             localStorage.removeItem('UserToken')
-                            window.location.href = `${localStorage.getItem('url')}/front/auth`
+                            window.location.href = `${localStorage.getItem('url')}/auth`
                         } else if (errMsg.status in [500]) {
                             $("#biometric_information_form").append(`<span class="errorMsg">${errMsg.responseJSON.messageError}<span>`)
                         }
@@ -134,7 +134,7 @@
                         console.log(errMsg)
                         if (errMsg.status == 401) {
                             localStorage.removeItem('UserToken')
-                            window.location.href = `${localStorage.getItem('url')}/front/auth`
+                            window.location.href = `${localStorage.getItem('url')}/auth`
                         } else if (errMsg.status in [500]) {
                             $("#orders_table").append(`<span class="errorMsg">${errMsg.responseJSON.messageError}<span>`)
                         }
@@ -163,7 +163,7 @@
                 success: (response) => {
                     if (response.message) {
                         localStorage.removeItem('UserToken')
-                        window.location.href = `${localStorage.getItem('url')}/front/auth`
+                        window.location.href = `${localStorage.getItem('url')}/auth`
                     }
                 },
                 failure: (failMsg) => {
@@ -173,7 +173,7 @@
                     console.log(errMsg)
                     if (errMsg.status == 401) {
                         localStorage.removeItem('UserToken')
-                        window.location.href = `${localStorage.getItem('url')}/front/auth`
+                        window.location.href = `${localStorage.getItem('url')}/auth`
                     }
                 }
             })
@@ -240,7 +240,7 @@
                     console.log(errMsg)
                     if (errMsg.status == 401) {
                         localStorage.removeItem('UserToken')
-                        window.location.href = `${localStorage.getItem('url')}/front/auth`
+                        window.location.href = `${localStorage.getItem('url')}/auth`
                     } else if (errMsg.status in [500]) {
                         $("#create_order_form").append(`<span class="errorMsg">${errMsg.responseJSON.messageError}<span>`)
                     }
@@ -277,7 +277,7 @@
                     console.log(errMsg)
                     if (errMsg.status == 401) {
                         localStorage.removeItem('UserToken')
-                        window.location.href = `${localStorage.getItem('url')}/front/auth`
+                        window.location.href = `${localStorage.getItem('url')}/auth`
                     } else if (errMsg.status in [500]) {
                         $("#personal_data_form").append(`<span class="errorMsg">${errMsg.responseJSON.messageError}<span>`)
                     }
@@ -311,7 +311,7 @@
                     console.log(errMsg)
                     if (errMsg.status == 401) {
                         localStorage.removeItem('UserToken')
-                        window.location.href = `${localStorage.getItem('url')}/front/auth`
+                        window.location.href = `${localStorage.getItem('url')}/auth`
                     } else if (errMsg.status in [500]) {
                         $("#biometric_information_form").append(`<span class="errorMsg">${errMsg.responseJSON.messageError}<span>`)
                     } else if (errMsg.status == 400) {

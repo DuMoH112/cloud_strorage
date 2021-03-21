@@ -7,7 +7,8 @@ from personal_area.registration import registration_bp
 
 from get_html import html_bp
 
-from Uploader.upload_page import cloud_drive_bp
+from Drive.upload_page import cloud_drive_bp
+from Drive.manage_storage import manage_storage_bp
 
 def route(app):
     app.register_blueprint(error_bp)
@@ -20,6 +21,7 @@ def route(app):
     app.register_blueprint(html_bp)
 
     app.register_blueprint(cloud_drive_bp)
+    app.register_blueprint(manage_storage_bp)
 
     return True
 
@@ -33,5 +35,6 @@ def csrf_exempt(csrf):
     csrf.exempt(html_bp)
 
     csrf.exempt(cloud_drive_bp)
+    csrf.exempt(manage_storage_bp)
 
     return True
