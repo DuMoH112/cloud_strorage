@@ -1,4 +1,5 @@
 import re
+import os
 import uuid
 import hashlib
 from json.decoder import JSONDecodeError
@@ -8,6 +9,7 @@ from psycopg2 import sql
 import requests
 import difflib
 
+from app.config import config
 from Database.postgres import Postgres_db
 from app.auth_utils import auth_user
 
@@ -48,6 +50,9 @@ def registration(user):
     finally:
         if database:
             database.close()
+
+    path = os.path.join(f"{config['APP']['PATH_STORAGE']}{user_data.get('username')}")
+    os.makedirs(path, exist_ok=True)
 
     return jsonify(True)
 
