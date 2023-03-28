@@ -19,4 +19,4 @@ cryptography==3.3.2
 psycopg2==2.8.6
 
 # Redis
-redis==3.5.3
+redis==4.5.3
